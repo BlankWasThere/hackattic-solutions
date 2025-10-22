@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
     println!("> Uploading solution...");
 
     let client = reqwest::blocking::Client::new();
-    let _ = client
+    let resp = client
         .post(format!(
             "https://hackattic.com/challenges/mini_miner/solve?access_token={}",
             API_KEY
@@ -61,7 +61,13 @@ fn main() -> anyhow::Result<()> {
         .body(soln_json.to_string())
         .send()?;
 
-    println!("> Solution uploaded successfully!");
+    if resp.status().is_success() {
+        println!("> Solution uploaded successfully!");
+    } else {
+        println!("[!] Error while uploading solution.");
+        println!("{}", resp.text().unwrap());
+    }
+
     Ok(())
 }
 
