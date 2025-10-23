@@ -1,4 +1,4 @@
-# [Help me unpack](https://hackattic.com/challenges/mini_miner)
+# [Help me unpack](https://hackattic.com/challenges/help_me_unpack)
 
 ## Problem
 > The challenge is to receive bytes and extract some numbers from those bytes.
