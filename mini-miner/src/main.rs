@@ -1,23 +1,22 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha256::digest as sha256;
-use std::io::Read;
 
 const API_KEY: &'static str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 struct Response {
     difficulty: u16,
     block: Block,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 struct Block {
     data: Vec<BlockData>,
     nonce: Option<u64>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 struct BlockData(String, i32);
 
 #[derive(Debug, Serialize)]
