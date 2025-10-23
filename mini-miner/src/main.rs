@@ -65,8 +65,9 @@ fn main() -> anyhow::Result<()> {
         println!("> Solution uploaded successfully!");
     } else {
         println!("[!] Error while uploading solution.");
-        println!("{}", resp.text().unwrap());
     }
+
+    println!("{}", resp.text().unwrap());
 
     Ok(())
 }
