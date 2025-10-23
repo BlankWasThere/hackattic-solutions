@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use sha256::digest as sha256;
 
 const API_KEY: &'static str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
@@ -41,10 +40,10 @@ fn main() -> anyhow::Result<()> {
 
     println!("> nonce: {}", nonce);
 
-    let soln = Solution { nonce };
-    let soln_json = json!(soln);
-    println!("{:?}", soln_json);
+    let solution = Solution { nonce };
+    println!("{:#?}", solution);
 
+    let solution_json = serde_json::to_string(&solution)?;
     println!("> Uploading solution...");
     let client = reqwest::blocking::Client::new();
     let resp = client
@@ -52,7 +51,7 @@ fn main() -> anyhow::Result<()> {
             "https://hackattic.com/challenges/mini_miner/solve?access_token={}",
             API_KEY
         ))
-        .body(soln_json.to_string())
+        .body(solution_json)
         .send()?;
 
     if resp.status().is_success() {
