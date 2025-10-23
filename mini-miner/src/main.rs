@@ -44,14 +44,9 @@ fn main() -> anyhow::Result<()> {
 
     let soln = Solution { nonce };
     let soln_json = json!(soln);
-
     println!("{:?}", soln_json);
 
-    println!("[!] Press enter to upload solution...");
-    _ = std::io::stdin().read(&mut [0]);
-
     println!("> Uploading solution...");
-
     let client = reqwest::blocking::Client::new();
     let resp = client
         .post(format!(
