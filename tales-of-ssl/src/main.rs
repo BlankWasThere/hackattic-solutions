@@ -3,7 +3,7 @@ use openssl::{hash::MessageDigest, x509::X509Builder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr as _;
 
-const API_KEY: &'static str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
+const API_KEY: &str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
 
 #[derive(Deserialize)]
 struct Response {

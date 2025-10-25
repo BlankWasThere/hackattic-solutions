@@ -2,7 +2,7 @@ use base64::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Read};
 
-const API_KEY: &'static str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
+const API_KEY: &str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
 
 #[derive(Deserialize)]
 struct Response {

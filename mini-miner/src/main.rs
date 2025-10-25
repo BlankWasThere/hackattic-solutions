@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sha256::digest as sha256;
 
-const API_KEY: &'static str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
+const API_KEY: &str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
 
 #[derive(Deserialize)]
 struct Response {
