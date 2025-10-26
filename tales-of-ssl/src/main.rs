@@ -76,7 +76,7 @@ fn solve(problem: Problem) -> anyhow::Result<Solution> {
         required_data,
     } = problem;
 
-    println!("> Generating certiificate...");
+    println!("> Generating certificate...");
     let certificate = generate_certificate(private_key, required_data)?;
     let encoded_certificate = encode_certificate(certificate)?;
 
