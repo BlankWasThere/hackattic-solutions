@@ -5,7 +5,7 @@ use std::io::{Cursor, Read};
 const API_KEY: &str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
 
 #[derive(Deserialize)]
-struct Response {
+struct Problem {
     bytes: String,
 }
 
@@ -21,15 +21,56 @@ struct Solution {
 
 fn main() -> anyhow::Result<()> {
     println!("> Fetching problem...");
-    let resp: Response = reqwest::blocking::get(format!(
-        "https://hackattic.com/challenges/help_me_unpack/problem?access_token={}",
-        API_KEY
-    ))?
-    .json()?;
+    let problem = fetch_problem()?;
 
     println!("> Finding solution...");
-    let decoded = BASE64_STANDARD.decode(resp.bytes)?;
+    let solution = solve(problem)?;
+    println!("[!] Found solution!");
+    println!("{:#?}", solution);
+
+    println!("> Uploading solution...");
+    let response = upload_solution(solution)?;
+    if response.status().is_success() {
+        println!("> Solution uploaded successfully!");
+    } else {
+        println!("[!] Error while uploading solution.");
+    }
+    println!("{}", response.text().unwrap());
+
+    Ok(())
+}
+
+fn fetch_problem() -> anyhow::Result<Problem> {
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(format!(
+            "https://hackattic.com/challenges/help_me_unpack/problem?access_token={}",
+            API_KEY
+        ))
+        .send()?
+        .json()?;
+
+    Ok(response)
+}
+
+fn upload_solution(solution: Solution) -> anyhow::Result<reqwest::blocking::Response> {
+    let serialized_solution = serde_json::to_string(&solution)?;
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .post(format!(
+            "https://hackattic.com/challenges/help_me_unpack/solve?access_token={}",
+            API_KEY
+        ))
+        .body(serialized_solution)
+        .send()?;
+
+    Ok(response)
+}
+
+fn solve(problem: Problem) -> anyhow::Result<Solution> {
+    let decoded = BASE64_STANDARD.decode(problem.bytes)?;
     println!("> Size of data: {}", decoded.len());
+
     let mut reader = Cursor::new(decoded);
 
     // Parsing...
@@ -50,7 +91,6 @@ fn main() -> anyhow::Result<()> {
 
     let mut buffer = [0_u8; 4];
     reader.read_exact(&mut buffer)?;
-    println!("{:?}", buffer);
     let float = f32::from_le_bytes(buffer);
 
     let mut buffer = [0_u8; 8];
@@ -61,7 +101,6 @@ fn main() -> anyhow::Result<()> {
     reader.read_exact(&mut buffer)?;
     let big_endian_double = f64::from_be_bytes(buffer);
 
-    // Combine and upload
     let solution = Solution {
         int,
         uint,
@@ -71,30 +110,5 @@ fn main() -> anyhow::Result<()> {
         big_endian_double,
     };
 
-    println!("[!] Found solution!");
-    println!("{:#?}", solution);
-
-    // println!("[!] Press enter to upload solution...");
-    // _ = std::io::stdin().read(&mut [0]);
-
-    let solution_json = serde_json::to_string(&solution)?;
-    println!("> Uploading solution...");
-
-    let client = reqwest::blocking::Client::new();
-    let resp = client
-        .post(format!(
-            "https://hackattic.com/challenges/help_me_unpack/solve?access_token={}",
-            API_KEY
-        ))
-        .body(solution_json)
-        .send()?;
-
-    if resp.status().is_success() {
-        println!("> Solution uploaded successfully!");
-    } else {
-        println!("[!] Error while uploading solution.");
-    }
-    println!("{}", resp.text().unwrap());
-
-    Ok(())
+    Ok(solution)
 }
