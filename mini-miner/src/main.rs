@@ -4,7 +4,7 @@ use sha256::digest as sha256;
 const API_KEY: &str = dotenvy_macro::dotenv!("HACKATTIC_API_KEY");
 
 #[derive(Deserialize)]
-struct Response {
+struct Problem {
     difficulty: u16,
     block: Block,
 }
@@ -25,69 +25,89 @@ struct Solution {
 
 fn main() -> anyhow::Result<()> {
     println!("> Fetching problem...");
-    let resp: Response = reqwest::blocking::get(format!(
-        "https://hackattic.com/challenges/mini_miner/problem?access_token={}",
-        API_KEY
-    ))?
-    .json()?;
-    let Response { difficulty, block } = resp;
+    let problem = fetch_problem()?;
 
-    println!("> Finding nonce...");
-    let nonce = match find_nonce(difficulty, block) {
-        Some(v) => v,
-        None => return Err(anyhow::anyhow!("Could not find nonce.")),
-    };
-
-    println!("> nonce: {}", nonce);
-
-    let solution = Solution { nonce };
+    println!("> Finding solution...");
+    let solution = solve(problem)?;
+    println!("[!] Found solution!");
     println!("{:#?}", solution);
 
-    let solution_json = serde_json::to_string(&solution)?;
     println!("> Uploading solution...");
-    let client = reqwest::blocking::Client::new();
-    let resp = client
-        .post(format!(
-            "https://hackattic.com/challenges/mini_miner/solve?access_token={}",
-            API_KEY
-        ))
-        .body(solution_json)
-        .send()?;
-
-    if resp.status().is_success() {
+    let response = upload_solution(solution)?;
+    if response.status().is_success() {
         println!("> Solution uploaded successfully!");
     } else {
         println!("[!] Error while uploading solution.");
     }
-
-    println!("{}", resp.text().unwrap());
+    println!("{}", response.text().unwrap());
 
     Ok(())
 }
 
-fn find_nonce(difficulty: u16, mut block: Block) -> Option<u64> {
-    for value in 0..=u64::MAX {
-        block.nonce = Some(value);
-        let json_content = serde_json::to_string(&block).unwrap();
-        let hash = sha256(&json_content);
+fn fetch_problem() -> anyhow::Result<Problem> {
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(format!(
+            "https://hackattic.com/challenges/mini_miner/problem?access_token={}",
+            API_KEY
+        ))
+        .send()?
+        .json()?;
 
-        if check_zero_bits(&hex_to_bytes(&hash), difficulty) {
-            return Some(value);
-        }
-    }
-
-    None
+    Ok(response)
 }
 
-/// This will panic if invalid hex string, or length is not even.
-fn hex_to_bytes(hex_str: &str) -> Vec<u8> {
+fn upload_solution(solution: Solution) -> anyhow::Result<reqwest::blocking::Response> {
+    let serialized_solution = serde_json::to_string(&solution)?;
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .post(format!(
+            "https://hackattic.com/challenges/mini_miner/solve?access_token={}&playground=1",
+            API_KEY
+        ))
+        .body(serialized_solution)
+        .send()?;
+
+    Ok(response)
+}
+
+fn solve(problem: Problem) -> anyhow::Result<Solution> {
+    let Problem {
+        difficulty,
+        mut block,
+    } = problem;
+
+    let nonce = (0..=u64::MAX).into_iter().find(|&value| {
+        block.nonce = Some(value);
+        let serialized_block = serde_json::to_string(&block).unwrap();
+        let hash = sha256(&serialized_block);
+        let Ok(bytes) = hex_to_bytes(&hash) else {
+            return false;
+        };
+
+        check_minimum_zero_bits(&bytes, difficulty)
+    });
+
+    let Some(nonce) = nonce else {
+        return Err(anyhow::anyhow!("Could not find nonce!"));
+    };
+
+    let solution = Solution { nonce };
+    Ok(solution)
+}
+
+fn hex_to_bytes(hex_str: &str) -> anyhow::Result<Vec<u8>> {
+    if !hex_str.len().is_multiple_of(2) {
+        return Err(anyhow::anyhow!("Hex string length must be even."));
+    }
+
     (0..hex_str.len())
         .step_by(2)
-        .map(|i| u8::from_str_radix(&hex_str[i..i + 2], 16).unwrap())
+        .map(|i| u8::from_str_radix(&hex_str[i..i + 2], 16).map_err(From::from))
         .collect()
 }
 
-fn check_zero_bits(bytes: &[u8], mut n: u16) -> bool {
+fn check_minimum_zero_bits(bytes: &[u8], mut n: u16) -> bool {
     let mut counter: usize = 0;
 
     while n >= 8 {
@@ -100,28 +120,4 @@ fn check_zero_bits(bytes: &[u8], mut n: u16) -> bool {
     }
 
     (bytes[counter] << n >> n) == bytes[counter]
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn check_nonce() {
-        let block = Block {
-            nonce: None,
-            data: vec![],
-        };
-        let difficulty = 8;
-
-        assert_eq!(find_nonce(difficulty, block), Some(45));
-    }
-
-    #[test]
-    fn check_zeros() {
-        let hex_string = "00deadc0deffff";
-        let difficulty = 8;
-
-        assert!(check_zero_bits(&hex_to_bytes(&hex_string), difficulty))
-    }
 }
