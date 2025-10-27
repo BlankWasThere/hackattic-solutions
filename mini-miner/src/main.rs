@@ -62,7 +62,7 @@ fn upload_solution(solution: Solution) -> anyhow::Result<reqwest::blocking::Resp
     let client = reqwest::blocking::Client::new();
     let response = client
         .post(format!(
-            "https://hackattic.com/challenges/mini_miner/solve?access_token={}&playground=1",
+            "https://hackattic.com/challenges/mini_miner/solve?access_token={}",
             API_KEY
         ))
         .body(serialized_solution)
