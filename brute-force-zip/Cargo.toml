@@ -1,0 +1,14 @@
+[package]
+name = "brute-force-zip"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+bytes = "1.10.1"
+dotenvy_macro = "0.15.7"
+itertools = "0.14.0"
+reqwest = { version = "0.12.24", features = ["blocking", "json"] }
+serde = "1.0.228"
+serde_json = "1.0.145"
+zip = { version = "6.0.0" }
