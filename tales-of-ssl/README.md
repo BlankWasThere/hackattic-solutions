@@ -5,10 +5,10 @@
 >
 > Things you may be asked to include in the certificate:
 >
->     a specific country as the organization's country
->     a specific certificate serial number
->     the domains the certificate should be valid for
->     specific valid from & to dates
+> - a specific country as the organization's country
+> - a specific certificate serial number
+> - the domains the certificate should be valid for
+> - specific valid from & to dates
 >
 > Encode the certificate in DER format with base64 and POST it to the solution endpoint.
 
