@@ -74,7 +74,7 @@ fn solve(reader: Cursor<bytes::Bytes>) -> anyhow::Result<Solution> {
 
     for len in 4..=6 {
         for password in (0..len)
-            .map(|_| valid_characters.iter().map(|&n| n))
+            .map(|_| valid_characters.iter().copied())
             .multi_cartesian_product()
         {
             if let Ok(mut decrypted_file) = zip_reader.by_name_decrypt("secret.txt", &password) {
