@@ -35,7 +35,7 @@ fn main() -> anyhow::Result<()> {
     } else {
         println!("[!] Error while uploading solution.");
     }
-    println!("{}", response.text().unwrap());
+    println!("{}", response.text()?);
 
     Ok(())
 }
