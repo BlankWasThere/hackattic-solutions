@@ -69,7 +69,6 @@ fn solve(reader: Cursor<bytes::Bytes>) -> anyhow::Result<Solution> {
     use std::io::Read as _;
 
     let mut zip_reader = zip::ZipArchive::new(reader)?;
-
     let valid_characters = b"abcdefghijklmnopqrstuvwxyz0123456789";
 
     for len in 4..=6 {
